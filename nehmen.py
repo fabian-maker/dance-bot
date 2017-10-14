@@ -1,0 +1,149 @@
+#! /usr/bin/python3
+#plotter.pyw
+import os, time, io,subprocess, thread
+from Tkinter import Tk, Label,PhotoImage, Canvas
+#from Tkinter import *
+from PIL import Image, ImageTk 
+WIDTH, HEIGTH = 80, 60
+LEFT = (0, 0, 40, 60,)
+RIGHT = (41, 0, 80,60)
+THRESHOLD = 40
+MIN_SIZE = 20
+
+class Camera:
+	def __init__(self):
+		self.new, self.old = None, None
+		
+	def takePhoto (self):
+		imageData = io.BytesIO()
+		self.old = self.new
+		command = 'raspistill -t 10 -w %i -h %i -o - -n ' \
+		% (WIDTH, HEIGTH)
+		imageData.write(subprocess.check_output(command, shell=True))
+		imageData.seek(0)
+		self.new = Image.open(imageData)
+		
+	def checkMotion (self):
+		if self.new and self.old:
+			return (self.changed(self.old.crop(LEFT),
+								 self.new.crop(LEFT)), 
+					self.changed(self.old.crop(RIGHT),
+								 self.new.crop(RIGHT)))
+		else:
+			#print "test" 
+			return False, False
+			
+	def changed (self, old, new):
+		changedPix = 0
+		o, n = old.load(), new.load()
+		width, heigth = old.size
+		
+		for x in range(width):
+			for y in range(heigth):
+				diff = abs(o[x, y][1] - n[x, y][1])
+				if diff >THRESHOLD:
+					changedPix += 1
+		return changedPix > MIN_SIZE
+				
+class Display(Label):
+	def __init__(self, master):
+		Label.__init__(self, master=master, width=12,
+					#heigth= 250, 
+					bg='white',
+					#front= ('Arial', 40), 
+					fg='black',
+					text='Von links: 0 \nVon rechts: 0')
+
+		self.left = 0
+		self.right = 0
+	
+	def motion(self, direction):
+		if direction == 'von links':
+			self.left += 1
+		else:
+			self.right += 1
+		message = 'Von links: %i \n Von rechts: %i' \
+		              %(self.left, self.right)
+		self.config(text=message)
+		
+class App:
+	def __init__(self):
+		self.window = Tk()
+		self.display = Display(self.window)
+		self.display.pack()
+		self.label = Label(master=self.window)
+		self.label.pack()
+		self.camera = Camera()
+		self.state='keine Bewegung'			
+		self.detect()
+		self.window.mainloop()
+		
+	def detect(self):
+		self.camera.takePhoto()
+		left, right = self.camera.checkMotion()
+		
+		print "Links", left
+		print "Rechts", right
+		
+		if self.state =='keine Bewegung':
+			if left and not right:
+				self.state = 'zuerst links'
+			elif right and not left:
+				self.state = 'zuerst rechts'
+			elif self.state == 'zuerst links':
+				if left and rigth:
+						self.state = 'zuerst links, dann rechts'
+				elif not(left or rigth):
+						self.state = 'keine Bewegung'
+			elif self.state == 'zuerst rehts':
+				if left and right:
+				        self.state = 'zuerst, dann links'
+				elif not(left or right):
+						self.state = 'keine Bewegung'
+			elif self.state == 'zuerst links, dann rechts':
+				if not (left or right):
+						self.state = 'keine Bewegung'
+						self.display.motion('von links')
+			elif self.state == 'zuerst rechts, dann links':
+				if not (left or right):
+						self.state = 'keine Bewegung'
+						self.display.motion('von rechts')
+				self.label.config(text=time.asctime()+''+ self.state)
+				self.window.after(100, self.detect)
+		self.detect()
+		
+class Plotter:
+	def __init__(self):
+		self.colors = ["red", "green"]
+		self.window = Tk()
+		self.window.title("R-L Reinfolge")
+		self.c = Canvas(master=self.window, width = 300, height= 250, bg="white")
+		self.c.create_text(20, 20, text="rechts")
+		self.c.create_text(20, 220, text="links")
+		self.c.pack()
+		t = right - left
+		self.pens = []
+		for i in range(len,(t)):
+			self.pens.append(Pen (self.c, t[i], self.colors[i%4]))
+			thread.start_new_thread(self.update, ())
+			self.window.mainloop()
+			
+	def update(self):
+		while True:
+			for i in range(60):
+				for pen in self.pens:
+					pen.draw(i*5)
+				time.sleep(1)
+			self.c.delete("point")
+			
+class Pen:
+	def __init__ (self, canvas, tempDevice, color):
+		self.canvas = canvas
+		self.device = color
+		
+	def draw(self, x):
+		y = 620 - self.device.read() * 20
+	#	self.canvas.create_line(x, y, x+3, y width=3, fill=self.color, tag="point")
+	
+#Plotter()				
+App()
