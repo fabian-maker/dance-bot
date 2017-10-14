@@ -15,7 +15,7 @@ class Camera:
 		def takePhote (self):
 			imageData = io.BytesIO()
 			self.old = self.new
-			command = `´raspistill -t 10 -w %i -h %i -o - -n ` \
+			command = 'raspistill -t 10 -w %i -h %i -o - -n ' \
 			% (WIDTH, HEIGTH)
 			imageData.write(subprocess.check_output(command, shell=True))
 			image.Data.seek(0)
@@ -43,19 +43,19 @@ class Camera:
 class Display(Label):
 	def__init__(self, master):
 		Label.__init__(self, master=master, width=12,
-		            heigth=2, bg=`white`,
-		            front=(`Arial`, 40), fg=`blue`,
-		            text=`Von links: 0 \n Von rechts: 0`)
+		            heigth=2, bg='white',
+		            front=('Arial', 40), fg='blue',
+		            text='Von links: 0 \n Von rechts: 0')
 	
         self.left = 0
 	    self.right = 0
 	
 	def motion(self, direction):
-		if direction == `von links`:
+		if direction == 'von links':
 			self.left += 1
 		else:
 			self.right += 1
-		message = `Von links: %i \n Von rechts: %i` \
+		message = 'Von links: %i \n Von rechts: %i' \
 		              %(self.left, self.right)
 		self.config(text=message)
 		
@@ -67,37 +67,37 @@ class App:
 		self.label = Label(master=self.window)
 		self.label.pack()
 		self.camera = Camera()
-		self.state=`keine Bewegung`
+		self.state='keine Bewegung'			
 		self.detect()
 		self.window.mainloop()
 		
 	def detect(self):
 		self.camera.takePhoto()
 		left, right = self.camera.checkMotion()
-		if self.state ==`keine Bewegung`:
+		if self.state =='keine Bewegung':
 			if left and not right:
-				self.state = `zuerst links`
+				self.state = 'zuerst links'
 			elif right and not left:
-				self.state = `zuerst rechts`
-				elif self.state == `zuerst links`:
+				self.state = 'zuerst rechts'
+				elif self.state == 'zuerst links':
 					if left and rigth:
-						self.state = `zuerst links, sann rechts`
+						self.state = 'zuerst links, dann rechts'
 					elif not(left or rigth):
-						self.state = `keine Bewegung`
-				elif self.state == `zuerst rehts`:
+						self.state = 'keine Bewegung'
+				elif self.state == 'zuerst rehts':
 					if left and right:
-				        self.state = `zuerst, dann links`
+				        self.state = 'zuerst, dann links'
 				    elif not(left or right):
-						self.state = `keine Bewegung`
-				    elif self.state == `zuerst links, dann rechts`:
+						self.state = 'keine Bewegung'
+				    elif self.state == 'zuerst links, dann rechts':
 						if not (left or right):
-							self.state = `keine Bewegung`
-							self.display.motion(`von links`)
-					elif.self.state == `zuerst rechts, dann links`:
+							self.state = 'keine Bewegung'
+							self.display.motion('von links')
+					elif.self.state == 'zuerst rechts, dann links':
 						if not (left or right):
-							self.state = `keine Bewegung`
-							self.display.motion(`von rechts`)
-					self.label.config(text=time.asctime()+``+ self.state)
+							self.state = 'keine Bewegung'
+							self.display.motion('von rechts')
+					self.label.config(text=time.asctime()+''+ self.state)
 					self.window.after(100, self.detect)
 					
 App()
