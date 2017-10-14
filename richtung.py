@@ -45,7 +45,7 @@ class Display(Label):
 		Label.__init__(self, master=master, width=12,
 		            heigth=2, bg=`white`,
 		            front=(`Arial`, 40), fg=`blue`,
-		            text=`Von links: 0 \nVon rechts: 0`
+		            text=`Von links: 0 \n Von rechts: 0`
 	
         self.left = 0
 	    self.right = 0
